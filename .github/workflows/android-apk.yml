@@ -47,12 +47,7 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Install Android SDK components
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends android-sdk adb
-          yes | sudo sdkmanager --licenses
-          sudo sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      # Android SDK is pre-installed on GitHub Actions runners. No manual install needed.
 
       - name: Cache Gradle dependencies
         uses: actions/cache@v4
