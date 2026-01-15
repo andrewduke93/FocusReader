@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FlowReader</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#f43f5e',
+                        brandDark: '#e11d48',
+                        accent: '#881337',
+                        danger: '#ef4444',
+                        background: 'var(--bg-color)',
+                        surface: 'var(--surface-color)',
+                        surfaceHighlight: 'var(--surface-highlight)',
+                        text: 'var(--text-color)',
+                        muted: 'var(--muted-color)',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        serif: ['Merriweather', 'Georgia', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.2s ease-out',
+                        'slide-up': 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'slide-down': 'slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'scale-in': 'scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                        'shake': 'shake 0.3s infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        slideDown: { '0%': { transform: 'translateY(-20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        scaleIn: { '0%': { transform: 'scale(0.95)', opacity: '0' }, '100%': { transform: 'scale(1)', opacity: '1' } },
+                        shake: {
+                            '0%, 100%': { transform: 'rotate(0deg)' },
+                            '25%': { transform: 'rotate(1deg)' },
+                            '75%': { transform: 'rotate(-1deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:wght@300;400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* --- Theming Variables --- */
+        :root {
+            --bg-color: #ffffff;
+            --surface-color: #f4f4f5;
+            --surface-highlight: #e4e4e7;
+            --text-color: #18181b;
+            --muted-color: #71717a;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(0, 0, 0, 0.05);
+        }
+        html.dark {
+            --bg-color: #09090b;
+            --surface-color: #18181b;
+            --surface-highlight: #27272a;
+            --text-color: #e4e4e7;
+            --muted-color: #a1a1aa;
+            --glass-bg: rgba(9, 9, 11, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+        html.sepia {
+            --bg-color: #f8f1e3;
+            --surface-color: #ebe3d3;
+            --surface-highlight: #e0d6c2;
+            --text-color: #2c241b; 
+            --muted-color: #8c7e6c;
+            --glass-bg: rgba(248, 241, 227, 0.95);
+            --glass-border: rgba(44, 36, 27, 0.08);
+        }
+        /* --- Utilities --- */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .glass-panel {
+            background: var(--surface-color);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3);
+        }
+        /* --- RSVP Framing Styles --- */
+        /* 1. Lines (Default) */
+        .frame-lines .rsvp-focus::before, .frame-lines .rsvp-focus::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 12px;
+            background-color: #f43f5e;
+            opacity: 0.6;
+            border-radius: 99px;
+        }
+        .frame-lines .rsvp-focus::before { top: -16px; }
+        .frame-lines .rsvp-focus::after { bottom: -16px; }
+        /* 2. Brackets */
+        .frame-brackets::before { content: '['; left: -1em; }
+        .frame-brackets::after { content: ']'; right: -1em; }
+        .frame-brackets::before, .frame-brackets::after {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-55%);
+            font-family: 'Inter', sans-serif;
+            font-weight: 200;
+            font-size: 1.2em;
+            color: #f43f5e;
+            opacity: 0.3;
+        }
+        /* 3. Underline */
+        .frame-underline .pivot-char {
+            border-bottom: 2px solid #f43f5e;
+            padding-bottom: 4px;
+        }
+        /* Pivot Character - always red/brand */
+        .pivot-char { 
+            color: #f43f5e; 
+            font-weight: 600;
+        }
+        #viewer iframe {
+            background-color: transparent !important; 
+            transition: opacity 0.3s;
+        }
+        body {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        /* Edit Mode Animations */
+        .is-editing .book-card-inner {
+            animation: shake 0.3s infinite ease-in-out alternate;
+        }
+        .is-editing .book-card-inner:nth-child(2n) {
+            animation-delay: 0.1s;
+        }
+        /* Interactive Scrubber */
+        .scrubber-container:hover .scrubber-track {
+            height: 8px;
+        }
+        .scrubber-container:hover .scrubber-thumb {
+            opacity: 1;
+            transform: scale(1);
+        }
+        /* Button Press Effect */
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden font-sans bg-background text-text selection:bg-brand/20 selection:text-brand-dark">
+    <div id="app" class="relative h-full w-full flex flex-col">
+        <!-- ...existing code... -->
+    </div>
+    <script>
+        // ...existing code...
+    </script>
+</body>
+</html>

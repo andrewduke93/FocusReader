@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">flowreader</string>
+    <string name="title_activity_main">flowreader</string>
+    <string name="package_name">com.flowreader.app</string>
+    <string name="custom_url_scheme">com.flowreader.app</string>
+</resources>
